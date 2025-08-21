@@ -21,17 +21,21 @@ public class CreateGameObjectTool : IMCPTool
 		properties = new
 		{
 			name = new { type = "string", description = "Name of the GameObject" },
-			position = new
-			{
-				type = "array",
-				items = new { type = "number" },
-				description = "Vector3 position in world space, Z-up"
-			},
+			position =
+				new
+				{
+					type = "array",
+					items = new { type = "number" },
+					description = "Vector3 position in world space, Z-up"
+				},
 			rotation = new
 			{
-				type = "array",
-				items = new { type = "number" },
-				description = "Angles rotation in world space"
+				type = "array", items = new { type = "number" }, description = "Angles rotation in world space"
+			},
+			modelPath = new
+			{
+				type = "string",
+				description = "Optional model path to attach to the GameObject with a ModelRenderer component"
 			},
 		},
 		required = new[] { "name", "position", "rotation" }
@@ -89,6 +93,7 @@ public class CreateGameObjectTool : IMCPTool
 			await GameTask.MainThread(); // Ensure this runs on the main thread
 
 			GameObject gameObject;
+			ModelRenderer modelRenderer = null;
 
 			using ( SceneEditorSession.Active.UndoScope( "Create Empty" ).WithGameObjectCreations().Push() )
 			{
@@ -96,6 +101,33 @@ public class CreateGameObjectTool : IMCPTool
 				gameObject.Name = name;
 				gameObject.WorldPosition = position;
 				gameObject.WorldRotation = rotation;
+			}
+
+			// Check if a model path was provided
+			if ( arguments.TryGetValue( "modelPath", out var modelPathObj ) && modelPathObj is string modelPath &&
+			     !string.IsNullOrEmpty( modelPath ) )
+			{
+				var modelAsset = AssetSystem.FindByPath( modelPath );
+				if ( modelAsset != null )
+				{
+					var modelResource = modelAsset.LoadResource<Model>();
+					if ( modelResource == null )
+					{
+						result.IsError = true;
+						result.Content.Add( new TextContent { Text = $"Model resource not found: {modelPath}" } );
+						return result;
+					}
+
+					using ( SceneEditorSession.Active.UndoScope( "Add ModelRenderer" ).WithComponentCreations().Push() )
+					{
+						modelRenderer = gameObject.AddComponent<ModelRenderer>();
+						modelRenderer.Model = modelResource;
+					}
+				}
+				else
+				{
+					result.Content.Add( new TextContent { Text = $"Model not found: {modelPath}" } );
+				}
 			}
 
 			result.Content.Add( new TextContent { Text = $"Successfully created GameObject: {name}" } );
@@ -109,7 +141,8 @@ public class CreateGameObjectTool : IMCPTool
 				{
 					gameObject.WorldRotation.Pitch(), gameObject.WorldRotation.Yaw(),
 					gameObject.WorldRotation.Roll()
-				}
+				},
+				modelRendererComponentId = modelRenderer?.Id,
 			};
 		}
 		catch ( Exception ex )
