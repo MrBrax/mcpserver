@@ -44,11 +44,22 @@ public class CloudSearchTool : IMCPTool
 		}
 
 		var query = arguments["query"].ToString();
-		var page = arguments.GetValueOrDefault( "page", 1 );
-		var pageSize = arguments.GetValueOrDefault( "pageSize", 10 );
 
-		var skip = ((int)page - 1) * (int)pageSize;
-		var take = (int)pageSize;
+		if ( !int.TryParse( arguments.GetValueOrDefault( "page", 1 )?.ToString(), out var page ) )
+		{
+			page = 1;
+		}
+
+		if ( !int.TryParse( arguments.GetValueOrDefault( "pageSize", 10 )?.ToString(), out var pageSize ) )
+		{
+			pageSize = 10;
+		}
+
+		if ( page < 1 ) page = 1;
+		if ( pageSize < 1 ) pageSize = 10;
+
+		var skip = (page - 1) * pageSize;
+		var take = pageSize;
 
 		var findResult = await Package.FindAsync( query, take, skip );
 
