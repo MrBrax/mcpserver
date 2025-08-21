@@ -196,10 +196,10 @@ public class MCPServer
 				return;
 			}
 
-			foreach ( var header in request.Headers.AllKeys )
+			/*foreach ( var header in request.Headers.AllKeys )
 			{
 				Log.Info( $"Request Header: {header} = {request.Headers[header]}" );
-			}
+			}*/
 
 			var sessionId = request.Headers["MCP-Session-Id"];
 			var protocolVersion = request.Headers["MCP-Protocol-Version"] ?? "2025-03-26";
