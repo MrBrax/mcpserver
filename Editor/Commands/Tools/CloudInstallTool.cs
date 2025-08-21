@@ -70,6 +70,19 @@ public class CloudInstallTool : IMCPTool
 			if ( asset != null )
 			{
 				result.Content.Add( new TextContent { Text = $"Asset already installed at: {assetPath}" } );
+
+				result.StructuredContent = new
+				{
+					Asset = new AssetInfo()
+					{
+						Path = asset.RelativePath,
+						RenderMins = package.GetMeta( "RenderMins", "" ),
+						RenderMaxs = package.GetMeta( "RenderMaxs", "" ),
+						PhysicsMins = package.GetMeta( "PhysicsMins", "" ),
+						PhysicsMaxs = package.GetMeta( "PhysicsMaxs", "" ),
+					}
+				};
+
 				return result;
 			}
 			else
@@ -92,8 +105,27 @@ public class CloudInstallTool : IMCPTool
 		}
 
 		result.Content.Add( new TextContent { Text = $"Successfully installed package: {packageIdent}" } );
-		result.StructuredContent = new { asset = new { path = installedAsset.RelativePath, } };
+		result.StructuredContent = new
+		{
+			Asset = new AssetInfo()
+			{
+				Path = installedAsset.RelativePath,
+				RenderMins = package.GetMeta( "RenderMins", "" ),
+				RenderMaxs = package.GetMeta( "RenderMaxs", "" ),
+				PhysicsMins = package.GetMeta( "PhysicsMins", "" ),
+				PhysicsMaxs = package.GetMeta( "PhysicsMaxs", "" ),
+			}
+		};
 
 		return result;
+	}
+
+	public class AssetInfo
+	{
+		public string Path { get; set; }
+		public string RenderMins { get; set; }
+		public string RenderMaxs { get; set; }
+		public string PhysicsMins { get; set; }
+		public string PhysicsMaxs { get; set; }
 	}
 }
